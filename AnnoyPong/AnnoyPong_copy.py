@@ -196,7 +196,8 @@ class Game(object):
             collisionHandled = self.handleBallPaddleCollision(lBall, self.leftpaddle)
             if collisionHandled:
                 lBall.setLastHitBy(self.leftpaddle)
-                self.sound.play("ballPadHit1")
+                if self.time_mode == "realtime":
+                    self.sound.play("ballPadHit1")
 
              
         # Right paddle
@@ -204,7 +205,8 @@ class Game(object):
             collisionHandled = self.handleBallPaddleCollision(lBall, self.rightpaddle)
             if collisionHandled:
                 lBall.setLastHitBy(self.rightpaddle)
-                self.sound.play("ballPadHit1")
+                if self.time_mode == "realtime":
+                    self.sound.play("ballPadHit1")
     
         # Collision handling with walls
         if not collisionHandled:
@@ -705,10 +707,11 @@ class SurpriseManager():
                 if pygame.sprite.collide_rect(ball, surp):
                     self.onScreen(surp, False)
                     surp.setActive(True, ball.getLastHitBy())
-                    if surp.good_bad == 'bad':
-                        self.game.sound.play("badSurprise")
-                    else:
-                        self.game.sound.play("goodSurprise")
+                    if self.time_mode == "realtime":
+                        if surp.good_bad == 'bad':
+                            self.game.sound.play("badSurprise")
+                        else:
+                            self.game.sound.play("goodSurprise")
                     self.waitToDeactivateSurprise() 
         
     def disableAllTimers(self):
@@ -1190,6 +1193,7 @@ class Paddle(SweptAabbSprite):
         self.middlelineRect = game.middlelineRect
         self.sound = game.sound
         self.ghostMode = False
+        self.game = game
 
         self.moveQueue = []
 
@@ -1348,7 +1352,8 @@ class Paddle(SweptAabbSprite):
             # Collision with goals, just sprite based
             for goal in self.goals:
                 if pygame.sprite.collide_rect(goal, self):
-                    self.sound.play("demonlol")
+                    if self.game.time_mode == "realtime":
+                        self.sound.play("demonlol")
                     
     def update(self):
         """Called to update the sprite. Do this every frame. Handles
