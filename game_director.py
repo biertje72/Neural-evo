@@ -101,6 +101,8 @@ class ConnectorAiPaddleToGame():
                     else:
                         self.ai_paddle.queueLeft(False) if self.is_left_player else self.ai_paddle.queueRight(False)
 
+from datetime import datetime
+
 class GameDirector():
     """ Glues the evolution to the existing AnnoyPong game"""
 
@@ -108,6 +110,7 @@ class GameDirector():
         self.game = AnnoyPong_copy.Game(time_mode = "realtime")
         self.frames_per_game = FRAMES_PER_GAME
         self.ecosytem = None
+        self.caption_last_update_time = datetime.now()
 
 
     def _run_game_for_VS_version(self, ai_paddle_left: AiPaddle, ai_paddle_right: AiPaddle, game_nr, total_games):
@@ -123,7 +126,11 @@ class GameDirector():
             right_connector.do_one_think_step()
 
             # update the title bar with our frames per second etc.
-            pygame.display.set_caption(f'Annoy Pong fps:{int(self.game.clock.get_fps()):4d}  frame:{self.game.frame:5d}/{self.frames_per_game}  game:{game_nr}/{total_games}  generation:{self.ecosystem.generation_nr}')  
+            cur_time = datetime.now()
+            if cur_time - self.caption_last_update_time > 3000:
+                pygame.display.set_caption(f'Annoy Pong fps:{int(self.game.clock.get_fps()):4d}  frame:{self.game.frame:5d}/{self.frames_per_game}  game:{game_nr}/{total_games}  generation:{self.ecosystem.generation_nr}')  
+                self.caption_last_update_time = cur_time
+
         left_fit = self.game.score.leftscore * FIT_SCORE_ON_GOAL + ai_paddle_left.nr_of_ball_hits *FIT_SCORE_ON_BALL_HIT
         right_fit = self.game.score.rightscore * FIT_SCORE_ON_GOAL + ai_paddle_right.nr_of_ball_hits*FIT_SCORE_ON_BALL_HIT
         print ("left_fit", left_fit)
@@ -169,12 +176,15 @@ class GameDirector():
             left_connector.do_one_think_step()
             right_connector.do_one_think_step()
 
-            # update the title bar with our frames per second etc.
-            pygame.display.set_caption(
-                f"Annoy Pong fps:{int(self.game.clock.get_fps()):4d}  frame:{self.game.frame:4d}/{self.frames_per_game}  " \
-                f"game:{game_nr:2d}/{total_games:2d}  generation:{self.ecosystem.generation_nr}  bests last 20 gens: {[int(f) for f in ecosystem.best_organism_fitnesses[-20:]]} " \
-                f"{left_connector.ai_paddle.get_description(False)}"
-            )  
+            # update the title bar with our frames per second etc. (not too much, cause windows does not like that many updates....)
+            cur_time = datetime.now()
+            if (cur_time - self.caption_last_update_time).microseconds > 100000:
+                pygame.display.set_caption(
+                    f"Annoy Pong fps:{int(self.game.clock.get_fps()):4d}  frame:{self.game.frame:4d}/{self.frames_per_game}  " \
+                    f"game:{game_nr:2d}/{total_games:2d}  generation:{self.ecosystem.generation_nr}  bests last 20 gens: {[int(f) for f in ecosystem.best_organism_fitnesses[-20:]]} " \
+                    f"{left_connector.ai_paddle.get_description(False)}"
+                )  
+                self.caption_last_update_time = cur_time            
         left_fit = (self.game.score.leftscore - self.game.score.rightscore) * FIT_SCORE_ON_GOAL + ai_paddle_left.nr_of_ball_hits *FIT_SCORE_ON_BALL_HIT
         #right_fit = self.game.score.rightscore * FIT_SCORE_ON_GOAL + ai_paddle_right.nr_of_ball_hits*FIT_SCORE_ON_BALL_HIT
         print ("left_fit", left_fit)
