@@ -11,23 +11,6 @@ MUTATE_STDEV=0.03 #ORIGINAL
 # #MUTATE_STDEV=0.003 MAURICE TRIED
 #MUTATE_STDEV=0.3  MAURICE TRIED
 
-ORGANISM_WRITE_FOLDER = "organisms10x32x4/"
-ORGANISMS_TO_PRELOAD_ON_START = [
-    "organisms10x32x4/fit218.0_178.0_006_1ceab678927b4206bdffda89fdd1714f_sz32.bin",
-    "organisms10x32x4/fit218.0_178.0_006_1ceab678927b4206bdffda89fdd1714f_sz32.bin",
-    #"organisms10x32x4/fit134.0_153.0_003_6d465ec0e4d14ff29f7f5bb4201d4122_sz32.bin",
-    #"organisms10x32x4/fit653.5_a0dbaff0a657440a937ceff14c9291f3_sz32.bin",
-    #"organisms10x32x4/fit341.0_541cf16a553a46c39d74c4ad7a0da1f4_sz32.bin",
-#    "organisms8x32x4/fit097_c11fdbcd52da47dc8fd1cac7206a336e_sz32.bin", 
-#    "organisms10x32x4/fit279.0_459511989c7a4b4c8b4552dfcc1f6689_sz32.bin",
-    #"organisms10x32x4/fit215.5_b2b9f572af1b41659f940a20da4baa0f_sz32.bin",
-#    "organisms10x32x4/fit299.5_9d69829464a24351b09a1b0b2b3ec86b_sz32.bin",
-#    "organisms8x32x4/fit283_a42cffc02ae44516902d148a97baa19e_sz32.bin",
-#    "organisms8x32x4/fit321_e1a37ceb2a98468daaa91605d4972edc_sz32.bin",
-    #"organisms8x32x4/fit298_c11fdbcd52da47dc8fd1cac7206a336e_sz32.bin",
-#    "organisms8x32x4/fit278_9b3d5f872745491c98f582155cf68171_sz32.bin",
-    #"organisms8x32x4/fit288.0_1ceab678927b4206bdffda89fdd1714f_sz32.bin",
-]
 
 class Organism():
     def __init__(self, dimensions, use_bias=True, output='softmax'):
@@ -180,7 +163,7 @@ class Organism():
 
 
 class Ecosystem():
-    def __init__(self, original_f, single_org_score_func=None, all_org_score_func=None, population_size=100, holdout_mating='sqrt', holdout_organisms='sqrt', mating=True):
+    def __init__(self, original_f, single_org_score_func=None, all_org_score_func=None, population_size=100, holdout_mating='sqrt', holdout_organisms='sqrt', mating=True, organisms_to_preload_on_start=[], organism_write_folder=""):
         """
         original_f must be a function to produce Organisms, used for the original population.
         single_org_score_func must be a function which accepts an Organism as input and returns a float.
@@ -200,7 +183,7 @@ class Ecosystem():
         self.organism_creator = original_f
         self.population = [self.organism_creator() for _ in range(population_size)]
         if self.generation_nr == 1:
-            for i, organims_pickle_bin in enumerate(ORGANISMS_TO_PRELOAD_ON_START):
+            for i, organims_pickle_bin in enumerate(organisms_to_preload_on_start):
                 print(f"First generation, adding following organism to it: {organims_pickle_bin}")
                 organism_to_sacrifice = self.population[i]
                 organism_to_sacrifice.unpickle_org(organims_pickle_bin)
@@ -208,6 +191,7 @@ class Ecosystem():
         self.best_organism_fitnesses = []   # per generation the highest score
         self.single_org_score_func = single_org_score_func
         self.all_org_score_func = all_org_score_func
+        self.organism_write_folder = organism_write_folder
 
         if holdout_mating == 'sqrt':
             self.nr_holdout_mating = max(1, int(np.sqrt(population_size)))
@@ -257,10 +241,10 @@ class Ecosystem():
         from statistics import median
         best_org = self.population[0]
         best_org.pickle_org(
-            f"{ORGANISM_WRITE_FOLDER}/fit{best_org.fitnesses[-1]:03}_" +
+            f"{self.organism_write_folder}/fit{best_org.fitnesses[-1]:03}_" +
             f"{median(best_org.fitnesses):03}_" +
             f"{len(best_org.fitnesses):03}_" +
-            f"{best_org.uuid_hex}_sz32.bin"
+            f"{best_org.uuid_hex}_sz{best_org.layers[0].shape[1]}.bin"
         )
 
     # Will replace current population with new population based on scoring, mating, mutating.
